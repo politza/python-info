@@ -15,9 +15,11 @@ DEFAULT := python-$(shell python --version 2>&1 | cut -d ' ' -f2).info.gz
 
 TEXI=$(PYDISTSDIR)/Python-%/Doc/build/texinfo/python.texi
 DIST=$(PYDISTSDIR)/Python-%
+CONF=$(PYDISTSDIR)/Python-%/Doc/conf.py
+CONF_COOKIE=\#BEG texinfo_documents
 
-.PRECIOUS: $(TEXI) $(DIST)
-.PHONY: all install-sphinx
+.PRECIOUS: $(TEXI) $(DIST) $(DIST).tgz
+.PHONY: all
 
 all: $(DEFAULT)
 
@@ -29,12 +31,16 @@ python-%.info: $(TEXI)
 	cp -v "$(PYDISTSDIR)/Python-$*/Doc/build/texinfo/python.info" \
 		"python-$*.info"
 
-$(TEXI): $(DIST)
+$(TEXI): $(DIST) 
 	@if ! which $(SPHINX) >/dev/null 2>&1; then \
 		echo "You need to install sphinx first"; \
 		false; \
 	fi
-	cd "$(PYDISTSDIR)/Python-$*/Doc" && \
+	@if ! grep -q "$(CONF_COOKIE)" "$</Doc/conf.py"; then \
+		echo "Appending conf.py to $</Doc/conf.py"; \
+		printf "$$(cat conf.py)" "$*" >> "$</Doc/conf.py"; \
+	fi	
+	cd "$</Doc" && \
 		$(SPHINX) $(SPHINXFLAGS) -b texinfo \
 			-d build/doctrees . build/texinfo
 
@@ -43,4 +49,3 @@ $(DIST): $(DIST).tgz
 
 $(DIST).tgz: 
 	wget "$(PYURL)/$*/Python-$*.tgz" -O "$@"
-
