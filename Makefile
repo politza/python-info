@@ -18,7 +18,8 @@ DIST=$(PYDISTSDIR)/Python-%
 CONF=$(PYDISTSDIR)/Python-%/Doc/conf.py
 CONF_COOKIE=\#BEG texinfo_documents
 
-.PRECIOUS: $(TEXI) $(DIST) $(DIST).tgz
+# Keep intermediate files ?
+# .PRECIOUS: $(TEXI) $(DIST) $(DIST).tgz
 .PHONY: all
 
 all: $(DEFAULT)
@@ -28,7 +29,7 @@ python-%.info.gz: python-%.info
 
 python-%.info: $(TEXI) 
 	+$(MAKE) -C "$(PYDISTSDIR)/Python-$*/Doc/build/texinfo"
-	cp -v "$(PYDISTSDIR)/Python-$*/Doc/build/texinfo/python.info" \
+	cp "$(PYDISTSDIR)/Python-$*/Doc/build/texinfo/python.info" \
 		"python-$*.info"
 
 $(TEXI): $(DIST) 
