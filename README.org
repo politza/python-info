@@ -1,0 +1,10 @@
+
+* Howto build python's documentation in texinfo format
+  1. Install the latest sphinx with python2.6.
+  2. Download the desired python distribution.
+  3. Build the info file as follows.
+#+begin_src sh
+  cd Python-x.y.z/Doc
+  sphinx-build -b texinfo -d build/doctrees . build/texinfo
+  cd build/texinfo && make
+#+end_src
