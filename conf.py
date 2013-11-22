@@ -40,12 +40,6 @@
 
 # All %s will be replaced with the version number.
 # DON'T CHANGE THE FILENAME (2nd item).
-
-try:
-    stdauthor = _stdauthor      # Not defined in 2.5
-except:
-    stdauthor = "John Doe"
-    
 texinfo_documents = [
     ('contents', 'python-%s', 'Python Documentation', stdauthor,
      'Python-%s', 'The Python Documentation', 'Python'),
