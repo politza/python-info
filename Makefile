@@ -8,7 +8,7 @@ PYURL ?= http://www.python.org/ftp/python
 # Flags for sphinx-build
 SPHINXFLAGS ?= -q
 # GZip the info file (.gz or empty)
-GZIPEXT=.gz
+GZIPEXT ?= .gz
 # Where to install the info files.
 INFODIR ?= $(HOME)/.emacs.d/info
 # Create info files for this python executable.
