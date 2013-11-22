@@ -16,7 +16,7 @@ PYVERSION ?= $(shell $(PYTHON) --version 2>&1 | cut -d ' ' -f2)
 
 
 ###
-CONF_COOKIE=\#BEG texinfo_documents
+CONF_COOKIE=\#BEGIN texinfo
 DOC_DIR=build/Python-$(PYVERSION)/Doc
 BUILD_DIR=$(DOC_DIR)/build/texinfo
 TEXI=$(BUILD_DIR)/python-$(PYVERSION).texi
