@@ -1,52 +1,69 @@
-# Build python info documentation.  Creates python-$version.info.gz files
-# in the current directory. Example:
-#
-# make python-3.3.0.info.gz
+#### Build python info documentation.
 
-# Where to look for and put python distributions.
-PYDISTSDIR ?= .
+### Settable Variables
 # The sphinx-build program.
-SPHINX ?= $(shell which sphinx-build)
+SPHINX ?= sphinx-build
 # Root url for downloading python distributions.
 PYURL ?= http://www.python.org/ftp/python
+# Flags for sphinx-build
 SPHINXFLAGS ?= -q
+# Where to install the info files.
+INFODIR ?= $(HOME)/.emacs.d/info
+# Create info files for this python executable.
+PYTHON ?= python
+# Create info files for this python version.
+PYVERSION ?= $(shell $(PYTHON) --version 2>&1 | cut -d ' ' -f2)
 
-DEFAULT := python-$(shell python --version 2>&1 | cut -d ' ' -f2).info.gz
 
-TEXI=$(PYDISTSDIR)/Python-%/Doc/build/texinfo/python.texi
-DIST=$(PYDISTSDIR)/Python-%
-CONF=$(PYDISTSDIR)/Python-%/Doc/conf.py
+###
 CONF_COOKIE=\#BEG texinfo_documents
+DOC_DIR=build/Python-$(PYVERSION)/Doc
+BUILD_DIR=$(DOC_DIR)/build/texinfo
+TEXI=$(BUILD_DIR)/python-$(PYVERSION).texi
+INFO=$(BUILD_DIR)/python-$(PYVERSION).info
+CONF=$(DOC_DIR)/conf.py
+infodir = $(INFODIR)
 
-# Keep intermediate files ?
-# .PRECIOUS: $(TEXI) $(DIST) $(DIST).tgz
-.PHONY: all
+export infodir 
 
-all: $(DEFAULT)
+.PHONY: all clean install uninstall distclean
 
-python-%.info.gz: python-%.info
-	gzip python-$*.info
+all: $(TEXI)
+	+$(MAKE) -C $(BUILD_DIR)
 
-python-%.info: $(TEXI) 
-	+$(MAKE) -C "$(PYDISTSDIR)/Python-$*/Doc/build/texinfo"
-	cp "$(PYDISTSDIR)/Python-$*/Doc/build/texinfo/python.info" \
-		"python-$*.info"
-
-$(TEXI): $(DIST) 
-	@if ! which $(SPHINX) >/dev/null 2>&1; then \
-		echo "You need to install sphinx first"; \
-		false; \
+$(TEXI): $(BUILD_DIR)
+	@if ! which $(SPHINX) >/dev/null 2>&1; then		\
+		echo "You need to install sphinx first";	\
+		false;						\
 	fi
-	@if ! grep -q "$(CONF_COOKIE)" "$</Doc/conf.py"; then \
-		echo "Appending conf.py to $</Doc/conf.py"; \
-		printf "$$(cat conf.py)" "$*" >> "$</Doc/conf.py"; \
+	@if ! grep -q "$(CONF_COOKIE)" "$(CONF)"; then		\
+		echo "Appending conf.py to $(CONF)";		\
+		sed -e 's/\(^\|[^%]\)%s/\1$(PYVERSION)/g'	\
+			-e 's/%%/%/g' conf.py			\
+			>> "$(CONF)";				\
 	fi	
-	cd "$</Doc" && \
+	cd "$(DOC_DIR)" && \
 		$(SPHINX) $(SPHINXFLAGS) -b texinfo \
 			-d build/doctrees . build/texinfo
+	touch $(BUILD_DIR)/*
 
-$(DIST): $(DIST).tgz
-	tar xzf "$@.tgz" 
 
-$(DIST).tgz: 
-	wget "$(PYURL)/$*/Python-$*.tgz" -O "$@"
+$(BUILD_DIR): build/Python-$(PYVERSION).tgz
+	tar xzf "$<" -C build
+	touch build/Python-$(PYVERSION)
+
+build/Python-$(PYVERSION).tgz:
+	mkdir -p build
+	wget "$(PYURL)/$(PYVERSION)/Python-$(PYVERSION).tgz" -O "$@" 
+
+install: all 
+	+$(MAKE) -C "$(BUILD_DIR)" install-info
+
+uninstall: 
+	+$(MAKE) -C "$(BUILD_DIR)" uninstall-info
+
+clean:
+	-[ -d "$(BUILD_DIR)" ] && $(MAKE) -C "$(BUILD_DIR)" clean
+
+distclean: clean
+	rm -rf -- build
