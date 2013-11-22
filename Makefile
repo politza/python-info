@@ -7,6 +7,8 @@ SPHINX ?= sphinx-build
 PYURL ?= http://www.python.org/ftp/python
 # Flags for sphinx-build
 SPHINXFLAGS ?= -q
+# GZip the info file (.gz or empty)
+GZIPEXT=.gz
 # Where to install the info files.
 INFODIR ?= $(HOME)/.emacs.d/info
 # Create info files for this python executable.
@@ -14,22 +16,23 @@ PYTHON ?= python
 # Create info files for this python version.
 PYVERSION ?= $(shell $(PYTHON) --version 2>&1 | cut -d ' ' -f2)
 
-
 ###
 CONF_COOKIE=\#BEGIN texinfo
+DIST=build/Python-$(PYVERSION).tgz
 DOC_DIR=build/Python-$(PYVERSION)/Doc
 BUILD_DIR=$(DOC_DIR)/build/texinfo
-TEXI=$(BUILD_DIR)/python-$(PYVERSION).texi
-INFO=$(BUILD_DIR)/python-$(PYVERSION).info
 CONF=$(DOC_DIR)/conf.py
-infodir = $(INFODIR)
+TEXI=$(BUILD_DIR)/python-$(PYVERSION).texi
+INFO=python-$(PYVERSION).info
+ZINFO=$(INFO)$(GZIPEXT)
 
-export infodir 
+.PHONY: all clean install uninstall cleanall
 
-.PHONY: all clean install uninstall distclean
+all: $(ZINFO)
 
-all: $(TEXI)
-	+$(MAKE) -C $(BUILD_DIR)
+$(ZINFO): $(TEXI)
+	makeinfo --no-split -o $(INFO) $<
+	[ -n "$(GZIPEXT)" ] && gzip $(INFO)
 
 $(TEXI): $(BUILD_DIR)
 	@if ! which $(SPHINX) >/dev/null 2>&1; then		\
@@ -45,25 +48,27 @@ $(TEXI): $(BUILD_DIR)
 	cd "$(DOC_DIR)" && \
 		$(SPHINX) $(SPHINXFLAGS) -b texinfo \
 			-d build/doctrees . build/texinfo
-	touch $(BUILD_DIR)/*
 
-
-$(BUILD_DIR): build/Python-$(PYVERSION).tgz
+$(BUILD_DIR): $(DIST)
 	tar xzf "$<" -C build
 	touch build/Python-$(PYVERSION)
 
-build/Python-$(PYVERSION).tgz:
+$(DIST):
 	mkdir -p build
 	wget "$(PYURL)/$(PYVERSION)/Python-$(PYVERSION).tgz" -O "$@" 
 
-install: all 
-	+$(MAKE) -C "$(BUILD_DIR)" install-info
+install: all
+	cp -t $(INFODIR) $(ZINFO)
+	install-info --info-dir="$(INFODIR)" $(ZINFO)
 
-uninstall: 
-	+$(MAKE) -C "$(BUILD_DIR)" uninstall-info
+uninstall: all
+	rm -f -- "$(INFODIR)/$(ZINFO)"
+	install-info --delete --info-dir="$(INFODIR)" $(ZINFO)
 
 clean:
-	-[ -d "$(BUILD_DIR)" ] && $(MAKE) -C "$(BUILD_DIR)" clean
+	rm -rf -- build/Python-$(PYVERSION)
+	rm -f -- $(ZINFO)
 
-distclean: clean
+cleanall: 
 	rm -rf -- build
+	rm -f -- python-*.info$(GZIPEXT)
