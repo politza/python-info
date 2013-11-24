@@ -41,7 +41,7 @@
 # All %s will be replaced with the version number.
 # DON'T CHANGE THE FILENAME (2nd item).
 texinfo_documents = [
-    ('contents', 'python-%s', 'Python Documentation', stdauthor,
+    ('contents', 'python-%s', 'Python Documentation', _stdauthor,
      'Python-%s', 'The Python Documentation', 'Python'),
 ]
 #END texinfo
